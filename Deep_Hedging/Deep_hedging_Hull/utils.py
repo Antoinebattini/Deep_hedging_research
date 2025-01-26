@@ -91,3 +91,52 @@ def bs_call(iv, T, S, K, r, q):
     return bs_price, bs_delta
 
 
+def compute_rewards(
+    path: np.ndarray,
+    option_price_path: np.ndarray,
+    delta_path: np.ndarray,
+    strike_price: float,
+    spread: float,
+):
+
+    N, total_T = path.shape
+    print(N)
+    T = total_T - 1 
+    
+    # Prepare an array to store the rewards: shape (N, T)
+    rewards = np.zeros((N, T), dtype=np.float64)
+    
+    # Loop over each path
+    for i in range(N):
+        # For each time step t from 0 to T-1
+        for t in range(T):
+            current_price = path.iloc[i, t]
+            current_option_price = option_price_path.iloc[i, t]
+            current_position = delta_path.iloc[i, t]
+
+            next_price = path.iloc[i, t+1]
+            next_option_price = option_price_path.iloc[i, t+1]
+            next_position = delta_path.iloc[i, t+1]
+
+            # ---------------------
+            # Reward calculation
+            # ---------------------
+            # 1) PnL from underlying movement:
+            #    (next_price - current_price) * next_position / 100
+            # 2) Minus transaction costs from changing the hedge position:
+            #    |current_position - next_position| * current_price * (spread / 100)
+            reward_t = (next_price - current_price) * next_position \
+                       - abs(current_position - next_position) * current_price * spread
+
+            # Final step adjustments:
+            if t == T - 1:
+                payoff_diff = (max(next_price - strike_price, 0.0) - next_option_price)
+                cost_to_close = next_position * next_price * spread
+                reward_t -= payoff_diff + cost_to_close
+            else:
+
+                reward_t -= (next_option_price - current_option_price)
+
+            rewards[i, t] = reward_t
+
+    return rewards
