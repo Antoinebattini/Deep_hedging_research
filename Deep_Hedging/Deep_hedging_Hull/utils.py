@@ -57,13 +57,13 @@ def get_sim_path(M, freq,num_sim):
     # Annual Return
     mu = 0.1
     # Annual Volatility
-    vol = 0.2
+    vol = 0.3
     # Initial Asset Value
     S = 100
     # Option Strike Price
-    K = 110
+    K = 100
     # Annual Risk Free Rate
-    r = 0.1
+    r = 0.0
     # Annual Dividend
     q = 0
     # asset price 2-d array
